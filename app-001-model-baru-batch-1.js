@@ -796,7 +796,7 @@ async function saveBackupFile(text) {
 }
 /* 106a-begin: cakupan cadangan JSON dan SINKRON untuk Bank ide, Seri, Statistik, Tes A/B (keputusan pemilik 31 Okt 2026). Disimpan di `extra` pada cadangan (versi tetap 4; berkas lama tanpa `extra` tetap terbaca; `extra` HILANG bila keempat toko kosong, jadi cadangan pengguna tanpa data itu tidak berubah). Gabung = tambah/perbarui per id (u terbesar menang), TIDAK menghapus. Rekaman suara ide (`au`) TIDAK ikut (hanya di perangkat). */
 let exQ = [];
-const exReady = () => !!(BNK.ready && TSX.ready && AB.ready && SR.ready && GY.ready && LY.ready && SK.ready && EV.ready && SHT.ready && spRdy && OD.ready && SBS.ready && SNS.ready && HFS.ready && HFB.ready && HFN.ready);   // STB-2a-3b, SNH-1c, OTH-1c, OTH-3b2, OTH-5c2c
+const exReady = () => { try { return !!(BNK.ready && TSX.ready && AB.ready && SR.ready && GY.ready && LY.ready && SK.ready && EV.ready && SHT.ready && spRdy && OD.ready && SBS.ready && SNS.ready && HFS.ready && HFB.ready && HFN.ready); } catch (e) { return false; } };   // STB-2a-3b, SNH-1c, OTH-1c, OTH-3b2, OTH-5c2c; T4d-1: try/catch (toko di app-012 dst belum didefinisikan bila skrip lambat dimuat = ReferenceError tak tertangkap)
 function exEnsure() {   // toko dimuat malas (saat tab dibuka): tunggu sampai keempatnya siap (maks 6 detik)
   return new Promise(res => { const t0 = Date.now(); (function w() { try { bnkLoad(); tsxLoad(); abLoad(); srLoad(); gyLoad(); lyLoad(); skLoad(); evLoad(); shtLoad(); odLoad(); sbsLoad(); snsLoad(); hfsLoad(); hfbLoad(); hfnLoad(); } catch (e) { /* abaikan */ } if (exReady() || Date.now() - t0 > 6000) res(exReady()); else setTimeout(w, 60); })(); });
 }
