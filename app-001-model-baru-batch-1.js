@@ -72,7 +72,7 @@ const CSPLOG = (() => {
   function waktu(t) { const d = new Date(t); if (!t || isNaN(d)) return '-'; const p = n => (n < 10 ? '0' : '') + n; return p(d.getDate()) + '/' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + '.' + p(d.getMinutes()); }
   function teks() {   // untuk disalin pemilik; tidak memuat alamat situs sendiri maupun kueri
     const r = muat(); let ua = ''; try { ua = str(navigator.userAgent, 110); } catch (e) { /* abaikan */ }
-    return ['Catatan pelanggaran CSP OMINIA', 'Perangkat: ' + ua, 'Jenis: ' + r.length + ', total kejadian: ' + jumlah(), '']
+    return ['Catatan pelanggaran CSP Ominia', 'Perangkat: ' + ua, 'Jenis: ' + r.length + ', total kejadian: ' + jumlah(), '']
       .concat(r.map((x, i) => (i + 1) + '. [' + x.d + '] ' + x.u + (x.s ? ' | sumber ' + x.s : '') + ' | ' + x.n + 'x | pertama ' + waktu(x.a) + ' | terakhir ' + waktu(x.z))).join('\n');
   }
   try { document.addEventListener('securitypolicyviolation', ev => { try { catat(ev); } catch (e) { /* pencatat tidak boleh mengganggu aplikasi */ } }); } catch (e) { /* peramban lama */ }
@@ -860,7 +860,7 @@ async function saveBackupFile(text) {
   try {
     if (typeof File === 'function' && navigator.share && navigator.canShare) {
       const file = new File([text], name, { type: 'application/json' });
-      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Cadangan OMINIA ' + today() }); r = 'shared'; }
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Cadangan Ominia ' + today() }); r = 'shared'; }
     }
   } catch (e) { r = e && e.name === 'AbortError' ? 'cancelled' : 'unsupported'; }
   if (r === 'shared') { markBackup(); toast('Cadangan dibagikan'); return; }

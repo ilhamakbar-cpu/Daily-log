@@ -1614,7 +1614,7 @@ function nyIcs(br, from, stamp) {   // satu acara berulang mingguan + alarm tepa
   const utc = d => '' + d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) + 'T' + p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + p2(d.getUTCSeconds()) + 'Z';
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Daily Log//Jam istirahat//ID', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT', 'UID:dailylog-istirahat@dailylog.local', 'DTSTAMP:' + utc(stamp),
     'DTSTART:' + ds(d0) + 'T' + hm(br.s), 'DTEND:' + ds(d0) + 'T' + hm(br.e), 'RRULE:FREQ=WEEKLY;BYDAY=' + days.map(x => NY_ICS[x]).join(','),
-    'SUMMARY:OMINIA: jam istirahat', 'DESCRIPTION:Satu kalimat dan satu klip\\, kurang dari 3 menit.',
+    'SUMMARY:Ominia: jam istirahat', 'DESCRIPTION:Satu kalimat dan satu klip\\, kurang dari 3 menit.',
     'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:Jam istirahat: satu kalimat dan satu klip', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR', ''].join('\r\n');
 }
 
@@ -1664,7 +1664,7 @@ function nyPdf(title, segs, dateStr) {
     if (text) cur.push('q ' + gray + ' g BT /' + font + ' ' + size + ' Tf ' + M + ' ' + y.toFixed(2) + ' Td (' + nyPe(text) + ') Tj ET Q');
   };
   nyWrapPara(title, 16, true, TW).forEach(l => row('F2', 16, l, 0, 0));
-  row('F1', 9, 'OMINIA' + (dateStr ? ' · ' + dateStr : ''), 0.4, 2);
+  row('F1', 9, 'Ominia' + (dateStr ? ' · ' + dateStr : ''), 0.4, 2);
   segs.forEach(s => {
     row('F2', 11, '[' + s.t + '] ' + s.n, 0, 14);
     const body = (s.pub || '').trim() || '(kosong)';
@@ -2289,7 +2289,7 @@ function evEarOn() {
   if (!CM.st) { evMsg('Buka kamera dulu.'); return; }
   try { EV.au = new Audio(evWav()); EV.au.loop = true; const pr = EV.au.play(); if (pr && pr.catch) pr.catch(() => { evMsg('Peramban menolak memutar audio senyap. Tombol earphone mungkin tidak terbaca.'); }); } catch (e) { EV.au = null; }
   if ('mediaSession' in navigator) {
-    try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'Tekan untuk mulai atau berhenti merekam', artist: 'OMINIA' }); } catch (e) { /* tidak didukung */ }
+    try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'Tekan untuk mulai atau berhenti merekam', artist: 'Ominia' }); } catch (e) { /* tidak didukung */ }
     EV_MS.forEach(k => { try { navigator.mediaSession.setActionHandler(k, () => evToggleRec('earphone')); } catch (e) { /* aksi tidak didukung */ } });
     try { navigator.mediaSession.playbackState = 'playing'; } catch (e) { /* abaikan */ }
   }

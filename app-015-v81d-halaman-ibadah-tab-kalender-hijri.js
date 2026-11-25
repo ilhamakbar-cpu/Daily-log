@@ -621,7 +621,7 @@ function ibxRmStatus() {
   let txt, btn = "";
   if (pm === "none") txt = "Peramban ini tidak mendukung notifikasi sistem. Pengingat tetap tampil di dalam aplikasi.";
   else if (pm === "denied") txt = "Notifikasi diblokir di pengaturan peramban. Izinkan dulu lewat pengaturan situs, lalu ketuk Aktifkan.";
-  else if (pm === "granted" && rm.nt) { txt = "Notifikasi aktif. Muncul selama OMINIA terbuka di peramban."; btn = '<button class="ibx-btn" data-q="ibxRmNt" data-v="0" data-fk="rm-nt0">Matikan notifikasi</button>'; }
+  else if (pm === "granted" && rm.nt) { txt = "Notifikasi aktif. Muncul selama Ominia terbuka di peramban."; btn = '<button class="ibx-btn" data-q="ibxRmNt" data-v="0" data-fk="rm-nt0">Matikan notifikasi</button>'; }
   else txt = "Notifikasi belum aktif. Sekarang pengingat hanya tampil di dalam aplikasi.";
   if (!(pm === "granted" && rm.nt) && pm !== "none") btn = '<button class="ibx-btn fill" data-q="ibxRmNt" data-v="1" data-fk="rm-nt1">Aktifkan notifikasi</button>';
   return '<section class="ibx-card"><h3>Pengingat ibadah</h3><p class="rm-st" id="rmSt">' + esc(txt) + '</p><div class="rm-act">' + btn + '<button class="ibx-btn" data-q="ibxRmTest" data-fk="rm-test">Uji pengingat</button></div><p class="ibx-fine">Peramban hanya bisa membunyikan notifikasi saat Daily Log masih terbuka (termasuk di latar belakang). Bila ditutup penuh, atau di HP yang membatasi notifikasi web, pakai alarm kalender di bagian bawah.</p></section>';
@@ -664,7 +664,7 @@ function ibxRmNextHtml(now) {
 }
 function ibxRmIcsBox() {
   const r = ibxRmIcs(), rm = ibdb.pref.rm;
-  return '<section class="ibx-card"><h3>Alarm di kalender HP</h3><p class="ibx-sub">Alarm dari aplikasi Kalender berbunyi sendiri walau OMINIA tertutup.</p><p class="rm-st">' + (r.n ? r.n + " acara siap diunduh" : "Belum ada acara: nyalakan minimal satu jenis pengingat" + (rm.on.includes("adzan") && !hxHas() ? " (adzan butuh lokasi)" : "")) + '</p><div class="rm-act"><button class="ibx-btn fill" data-q="ibxRmIcs" data-fk="rm-ics"' + (r.n ? "" : " disabled") + '>Unduh alarm (.ics)</button></div><p class="ibx-fine">Berkas memuat adzan dan sepertiga malam untuk 30 hari ke depan (jam dihitung dari lokasi Anda), Al-Kahfi dan puasa Senin-Kamis berulang tiap pekan, serta Ayyamul Bidh, hari besar, dan kajian. Buka berkas di Kalender HP lalu izinkan impor. Unduh ulang tiap bulan agar jadwal shalat tetap baru; acara dengan penanda yang sama diperbarui, bukan digandakan, oleh sebagian aplikasi kalender.</p></section>';
+  return '<section class="ibx-card"><h3>Alarm di kalender HP</h3><p class="ibx-sub">Alarm dari aplikasi Kalender berbunyi sendiri walau Ominia tertutup.</p><p class="rm-st">' + (r.n ? r.n + " acara siap diunduh" : "Belum ada acara: nyalakan minimal satu jenis pengingat" + (rm.on.includes("adzan") && !hxHas() ? " (adzan butuh lokasi)" : "")) + '</p><div class="rm-act"><button class="ibx-btn fill" data-q="ibxRmIcs" data-fk="rm-ics"' + (r.n ? "" : " disabled") + '>Unduh alarm (.ics)</button></div><p class="ibx-fine">Berkas memuat adzan dan sepertiga malam untuk 30 hari ke depan (jam dihitung dari lokasi Anda), Al-Kahfi dan puasa Senin-Kamis berulang tiap pekan, serta Ayyamul Bidh, hari besar, dan kajian. Buka berkas di Kalender HP lalu izinkan impor. Unduh ulang tiap bulan agar jadwal shalat tetap baru; acara dengan penanda yang sama diperbarui, bukan digandakan, oleh sebagian aplikasi kalender.</p></section>';
 }
 function ibxRmPanel(now) {
   return ibxRmFeedHtml() + ibxRmStatus() + ibxRmTypes() + ibxRmNextHtml(now) + ibxRmIcsBox() +

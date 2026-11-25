@@ -66,12 +66,12 @@ function rmFold(line) {   // lipat baris > 75 oktet UTF-8 tanpa memotong karakte
   return out.join('\r\n');
 }
 function rmICS(evs, cfg, now) {
-  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Daily Log//Jadwal latihan//ID', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Jadwal latihan OMINIA'];
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Daily Log//Jadwal latihan//ID', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Jadwal latihan Ominia'];
   const stamp = rmUtc(now);
   evs.forEach(ev => {
     const a = rmWall(ev.date, ev.start), b = new Date(a.getTime() + ev.dur * 60000);
     L.push('BEGIN:VEVENT', 'UID:dl-' + ev.date.replace(/-/g, '') + '-' + ev.kind + '@dailylog', 'DTSTAMP:' + stamp, 'DTSTART:' + rmUtc(a), 'DTEND:' + rmUtc(b),
-      'SUMMARY:' + rmEsc(ev.title), 'DESCRIPTION:' + rmEsc('OMINIA. Fase ' + ev.ph + ': ' + PHASES[ev.ph - 1].nama + '.'));
+      'SUMMARY:' + rmEsc(ev.title), 'DESCRIPTION:' + rmEsc('Ominia. Fase ' + ev.ph + ': ' + PHASES[ev.ph - 1].nama + '.'));
     if (cfg.lead > 0) L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + rmEsc(ev.title), 'TRIGGER:-PT' + cfg.lead + 'M', 'END:VALARM');
     L.push('END:VEVENT');
   });
