@@ -6,6 +6,80 @@ const PRAYERS = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
 const KEY = 'dailylog:v1';
 const KEY_P = 'dailylog:plan:v1', KEY_T = 'dailylog:train:v1', KEY_C = 'dailylog:checks:v1', KEY_M = 'dailylog:meta:v1';
 
+/* ========= MODUL: PENCATAT PELANGGARAN CSP (T4e-1, 25 Nov 2026) =========
+   Tujuan: CSP di index.html (dist) memblokir fitur tanpa pesan; di HP tanpa konsol tidak ada yang terlihat. Pencatat ini menangkap event
+   `securitypolicyviolation` dan menyimpan ringkasannya: direktif + alamat TANPA kueri/fragmen/kredensial + sumber berkas:baris + hitungan.
+   Tidak ada jaringan, tidak ada data log harian, isi skrip (`sample`) TIDAK disimpan. Gagal simpan = tetap jalan di memori.
+   Berdiri sendiri (tanpa fungsi aplikasi lain) agar bisa diuji di Node: penanda CSPLOG:begin/end dipakai alat/t4e1_csplog.js. */
+/* CSPLOG:begin */
+const CSPLOG = (() => {
+  const KEY = 'dailylog:csp:v1', MAX = 40, CUT = 140, SAVE_MS = 350, NMAX = 99999;
+  let rows = null, seen = 0, timer = 0;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  function urlBersih(raw) {   // alamat -> skema://host/jalur (kueri, fragmen, nama pengguna, sandi dibuang); 'inline', 'eval', 'data' dst. tetap
+    raw = str(raw, 600).trim();
+    if (!raw) return '';
+    try {
+      const u = new URL(raw), sk = u.protocol.replace(':', '');
+      return (u.host ? sk + '://' + u.host + u.pathname : sk).slice(0, CUT);
+    } catch (e) {
+      return raw.replace(/[?#].*$/, '').replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]*@/i, '').slice(0, CUT);
+    }
+  }
+  const direktif = ev => str(ev.effectiveDirective || ev.violatedDirective, 80).trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40) || 'tak-dikenal';
+  function sumber(ev) {   // berkas penyebab (bila ada) + nomor baris; berkas se-asal ditulis sebagai jalur saja
+    let s = urlBersih(ev.sourceFile);
+    try { const o = location.origin + '/'; if (s.indexOf(o) === 0) s = s.slice(o.length - 1); } catch (e) { /* abaikan */ }
+    const l = Math.floor(Number(ev.lineNumber));
+    return s ? (s + (l > 0 && l < 1e8 ? ':' + l : '')).slice(0, CUT) : '';
+  }
+  function muat() {
+    if (rows) return rows;
+    rows = [];
+    try {
+      const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (o && typeof o === 'object' && Array.isArray(o.rows)) {
+        seen = Number(o.seen) > 0 ? Number(o.seen) : 0;
+        o.rows.forEach(r => {
+          if (!r || typeof r !== 'object' || rows.length >= MAX) return;
+          const d = str(r.d, 40); if (!d) return;
+          rows.push({ d, u: str(r.u, CUT), s: str(r.s, CUT), n: Math.min(NMAX, Math.max(1, Math.floor(Number(r.n)) || 1)), a: Number(r.a) || 0, z: Number(r.z) || 0 });
+        });
+      }
+    } catch (e) { /* rusak atau penyimpanan tak tersedia: mulai kosong */ }
+    return rows;
+  }
+  function simpan() {   // ditunda 350 ms supaya serentetan pelanggaran = satu tulisan
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = 0;
+      try { localStorage.setItem(KEY, JSON.stringify({ v: 1, seen, rows: muat() })); } catch (e) { /* penuh atau diblokir: tetap di memori */ }
+    }, SAVE_MS);
+  }
+  function tambah(d, u, s, now) {   // kejadian yang sama (direktif + alamat + sumber) digabung: hitungan naik, naik ke urutan teratas
+    const r = muat(); now = now || Date.now();
+    const i = r.findIndex(x => x.d === d && x.u === u && x.s === s);
+    if (i >= 0) { const x = r.splice(i, 1)[0]; x.n = Math.min(NMAX, x.n + 1); x.z = now; r.unshift(x); }
+    else { r.unshift({ d, u, s, n: 1, a: now, z: now }); if (r.length > MAX) r.length = MAX; }
+    simpan();
+  }
+  function catat(ev) { if (ev) tambah(direktif(ev), urlBersih(ev.blockedURI) || '(kosong)', sumber(ev)); }
+  const daftar = () => muat().map(r => Object.assign({}, r));
+  const jumlah = () => muat().reduce((a, r) => a + r.n, 0);
+  const baru = () => muat().filter(r => r.z > seen).length;   // jenis pelanggaran yang terakhir terjadi SESUDAH halaman Data terakhir dibuka
+  function tandaiDilihat() { muat(); seen = Date.now(); simpan(); }
+  function hapus() { rows = []; seen = 0; if (timer) { clearTimeout(timer); timer = 0; } try { localStorage.removeItem(KEY); } catch (e) { /* abaikan */ } }
+  function waktu(t) { const d = new Date(t); if (!t || isNaN(d)) return '-'; const p = n => (n < 10 ? '0' : '') + n; return p(d.getDate()) + '/' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + '.' + p(d.getMinutes()); }
+  function teks() {   // untuk disalin pemilik; tidak memuat alamat situs sendiri maupun kueri
+    const r = muat(); let ua = ''; try { ua = str(navigator.userAgent, 110); } catch (e) { /* abaikan */ }
+    return ['Catatan pelanggaran CSP OMINIA', 'Perangkat: ' + ua, 'Jenis: ' + r.length + ', total kejadian: ' + jumlah(), '']
+      .concat(r.map((x, i) => (i + 1) + '. [' + x.d + '] ' + x.u + (x.s ? ' | sumber ' + x.s : '') + ' | ' + x.n + 'x | pertama ' + waktu(x.a) + ' | terakhir ' + waktu(x.z))).join('\n');
+  }
+  try { document.addEventListener('securitypolicyviolation', ev => { try { catat(ev); } catch (e) { /* pencatat tidak boleh mengganggu aplikasi */ } }); } catch (e) { /* peramban lama */ }
+  return { catat, tambah, daftar, jumlah, baru, tandaiDilihat, hapus, teks, waktu, KEY, MAX };
+})();
+/* CSPLOG:end */
+
 /* ========= UTIL ========= */
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1205,6 +1279,7 @@ function renderData() {
   gdUsBox();
   renderUpBox();
   renderRmBox();
+  renderCspBox();
   stPaint();
 }
 let stTab = 'bk';   // v74s: bagian Pengaturan yang tampil (selalu mulai di Cadangan saat halaman BARU dibuka)
@@ -1539,6 +1614,42 @@ function extraInfo() {
 
 /* ===== MODUL: INFRA AKSI (batch 1) ===== */
 const QACT = {};   // aksi tombol: data-q="nama" memanggil QACT.nama(elemen, event)
+/* CSPUI:begin (T4e-3): kartu "Catatan keamanan" di Pengaturan > Preferensi; memakai CSPLOG (T4e-1); tidak menyimpan apa pun sendiri */
+let cspOpen = false;   // kartu terbuka (selama aplikasi terbuka)
+let cspAll = false;    // daftar penuh (bawaan: 8 baris pertama)
+const CSP_SHOW = 8;
+const CSP_ARTI = { 'connect-src': 'Sambungan data', 'script-src': 'Skrip', 'script-src-elem': 'Skrip', 'script-src-attr': 'Skrip sebaris', 'style-src': 'Gaya', 'style-src-elem': 'Gaya', 'style-src-attr': 'Gaya sebaris', 'img-src': 'Gambar', 'media-src': 'Audio atau video', 'frame-src': 'Bingkai tertanam', 'font-src': 'Font', 'worker-src': 'Worker', 'form-action': 'Kirim formulir', 'object-src': 'Objek', 'base-uri': 'Alamat dasar', 'default-src': 'Bawaan' };
+const cspStatus = (n, b) => (n ? n + ' jenis' + (b ? ' · ' + b + ' baru' : '') : 'Bersih');
+function renderCspBox() {
+  const box = $('#cspBox'); if (!box) return;
+  const rows = CSPLOG.daftar(), nb = CSPLOG.baru(), cut = !cspAll && rows.length > CSP_SHOW;
+  const li = (cut ? rows.slice(0, CSP_SHOW) : rows).map((r, i) => '<li><div class="csp-h"><span class="csp-d">' + esc(CSP_ARTI[r.d] || 'Lainnya') + ' <small>' + esc(r.d) + '</small></span><span class="csp-n">' + (i < nb ? '<i class="csp-new">baru</i> ' : '') + r.n + '×</span></div>' +
+    '<div class="csp-u">' + esc(r.u) + '</div>' +
+    '<div class="csp-m">' + (r.s ? 'Sumber ' + esc(r.s) + ' · ' : '') + 'pertama ' + esc(CSPLOG.waktu(r.a)) + ' · terakhir ' + esc(CSPLOG.waktu(r.z)) + '</div></li>').join('');
+  box.innerHTML = '<details class="ph" id="cspDet"' + (cspOpen ? ' open' : '') + '><summary><span>Catatan keamanan</span><small id="cspStat">' + esc(cspStatus(rows.length, nb)) + '</small><i class="chev"></i></summary><div class="body">' +
+    '<p class="note">Aplikasi ini memblokir skrip dan sambungan yang tidak dikenal. Bila sebuah fitur diam tanpa pesan, penyebabnya mungkin tercatat di sini. Salin catatannya lalu kirim ke Claude.</p>' +
+    (rows.length ? '<ul class="csp-l">' + li + '</ul>' + (cut ? '<button class="link tap csp-more" data-q="cspMore">Tampilkan semua (' + rows.length + ')</button>' : '') : '<div class="empty">Belum ada yang diblokir.</div>') +
+    '<div class="quick"><button class="btn sm" data-q="cspCopy"' + (rows.length ? '' : ' disabled') + '>Salin catatan</button><button class="btn sm ghost" data-q="cspDel"' + (rows.length ? '' : ' disabled') + '>Hapus catatan</button></div>' +
+    '<p class="note">Alamat disimpan tanpa kueri dan tanpa kunci. Catatan hanya ada di perangkat ini dan tidak ikut cadangan JSON.</p></div></details>';
+}
+QACT.cspCopy = async () => {
+  const txt = CSPLOG.teks();
+  try { if (!navigator.clipboard || !navigator.clipboard.writeText) throw 0; await navigator.clipboard.writeText(txt); toast('Catatan tersalin'); return; } catch (e) { /* cadangan di bawah */ }
+  openSheet({ title: 'Catatan keamanan', note: 'Tekan lama pada teks lalu pilih Salin.', text: txt, actions: [{ label: 'Salin', primary: true, fn: copyFromSheet }, { label: 'Tutup', fn: closeSheet }] });
+};
+QACT.cspMore = () => { cspAll = true; renderCspBox(); const l = $('#cspBox .csp-l li:nth-child(' + (CSP_SHOW + 1) + ')'); if (l) l.scrollIntoView({ block: 'nearest' }); };
+QACT.cspDel = () => {
+  const had = $('#cspBox') && $('#cspBox').contains(document.activeElement);
+  CSPLOG.hapus(); cspAll = false; renderCspBox();
+  if (had) { const d = $('#cspDet > summary'); if (d) d.focus(); }
+  toast('Catatan keamanan dihapus');
+};
+document.addEventListener('toggle', ev => {
+  if (!ev.target || ev.target.id !== 'cspDet') return;
+  cspOpen = ev.target.open;
+  if (cspOpen) { CSPLOG.tandaiDilihat(); const s = $('#cspStat'); if (s) s.textContent = cspStatus(CSPLOG.daftar().length, 0); }   // dibuka = sudah dilihat
+}, true);
+/* CSPUI:end */
 QACT.sleepClr = () => { setField('sleepStart', ''); setField('sleepEnd', ''); };   // v23z4: hapus kedua jam; durasi tetap, kotaknya terbuka lagi
 document.addEventListener('click', ev => {
   const seg = ev.target.closest('[data-pseg]');

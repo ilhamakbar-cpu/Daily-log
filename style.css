@@ -5138,3 +5138,17 @@ button.ock-b:not(:disabled):active{transform:translate(-50%,-50%) scale(.97)}
 @media (hover:hover){#v-home #homeBody.br13>[data-hk=week] .stamps.wk .stamp:hover{transform:translateY(-2px)}}
 @media (max-width:359px){#v-home #homeBody.br13>[data-hk=week] .stamps.wk{gap:4px}#v-home #homeBody.br13>#homeScore .recap .tile:nth-child(1) b{font-size:52px}}
 /* ===== BR-13-end ===== */
+/* ===== CSP-UI-begin (T4e-3): kartu Catatan keamanan; token yang sudah ada saja (--ink, --mute, --rule, --teal); radius 8; jarak kisi 4/8/12/16 ===== */
+#cspBox .csp-l{list-style:none;margin:12px 0 0;padding:0}
+#cspBox .csp-l li{padding:12px 0;border-top:1px solid var(--rule)}
+#cspBox .csp-l li:first-child{border-top:0;padding-top:4px}
+#cspBox .csp-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+#cspBox .csp-d{min-width:0;font:600 calc(15px * var(--fs))/1.4 var(--sans);color:var(--ink)}
+#cspBox .csp-d small{margin-left:4px;font:400 calc(13px * var(--fs)) ui-monospace,Menlo,Consolas,monospace;color:var(--mute)}
+#cspBox .csp-n{flex:none;font:600 calc(13px * var(--fs)) var(--sans);color:var(--mute);font-variant-numeric:tabular-nums}
+#cspBox .csp-new{margin-right:4px;font-style:normal;color:var(--teal)}
+#cspBox .csp-u{margin-top:4px;font:calc(13px * var(--fs))/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);overflow-wrap:anywhere}
+#cspBox .csp-m{margin-top:4px;font-size:calc(13px * var(--fs));line-height:1.5;color:var(--mute)}
+#cspBox .btn[disabled]{opacity:.45}
+#cspBox .csp-more{margin-top:4px}
+/* ===== CSP-UI-end ===== */
